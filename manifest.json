@@ -1,0 +1,21 @@
+{
+  "name": "LAD Pocket Pro Siemens V2",
+  "short_name": "LAD Siemens",
+  "description": "PWA com 100 padrões LAD para CLP Siemens no TIA Portal.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#061426",
+  "theme_color": "#061426",
+  "icons": [
+    {
+      "src": "assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

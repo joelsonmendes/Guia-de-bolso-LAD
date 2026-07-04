@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#061426" />
+  <meta name="description" content="LAD Pocket Pro Siemens V2: PWA/App Web com 100 padrões LAD para TIA Portal, CLP Siemens, IHM, inversores e Profinet." />
+  <title>LAD Pocket Pro Siemens V2</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="assets/icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="assets/icons/icon-192.png" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand-card">
+        <img src="assets/logo_senai_hub.webp" alt="SENAI HUB" class="brand-logo" />
+        <div class="brand-subtitle">LAD Pocket Pro Siemens • V2</div>
+      </div>
+      <nav class="menu" aria-label="Menu principal">
+        <button class="menu-item active" data-view="home">Início</button>
+        <button class="menu-item" data-view="patterns">100 Padrões LAD</button>
+        <button class="menu-item" data-view="simulator">Simulação Didática</button>
+        <button class="menu-item" data-view="tia">TIA Portal</button>
+        <button class="menu-item" data-view="favorites">Favoritos</button>
+        <button class="menu-item" data-view="about">Sobre</button>
+      </nav>
+      <div class="sidebar-footer">
+        <strong>Foco 100% Siemens</strong>
+        <span>S7-1200 • S7-1500 • IHM • Inversor • Profinet</span>
+      </div>
+    </aside>
+
+    <main class="content">
+      <header class="topbar">
+        <button class="hamburger" id="hamburger" aria-label="Abrir menu">☰</button>
+        <div>
+          <h1>LAD Pocket Pro Siemens</h1>
+          <p>Biblioteca prática com 100 padrões LAD para TIA Portal</p>
+        </div>
+        <button class="install-btn" id="installBtn" hidden>Instalar App</button>
+      </header>
+
+      <section class="hero view" id="homeView">
+        <div class="hero-text">
+          <span class="eyebrow">PWA/App Web • Siemens • SENAI HUB</span>
+          <h2>Do comando básico ao controle com IHM, inversor e Profinet.</h2>
+          <p>Versão V2 com 100 padrões práticos, desenhos LAD conceituais, tags Siemens, checklist de teste, tela de simulação didática e guia de estruturação no TIA Portal.</p>
+          <div class="hero-actions">
+            <button class="primary" data-view="patterns">Abrir biblioteca</button>
+            <button class="secondary" id="randomPattern">Padrão aleatório</button>
+          </div>
+        </div>
+        <div class="hero-panel">
+          <div class="phone-mock">
+            <div class="phone-top">LADDER LOGIC</div>
+            <div class="ladder-visual mini">
+              <div class="rail left"></div><div class="rail right"></div>
+              <div class="mini-rung"><span>[ BT_Liga ]</span><span>[ Permissivo ]</span><strong>( Motor )</strong></div>
+              <div class="mini-rung"><span>[ Timer.Q ]</span><span>[ Status_OK ]</span><strong>( Sinal )</strong></div>
+              <div class="mini-rung"><span>[ Falha ]</span><span>[ Reset ]</span><strong>( Alarme )</strong></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="stats view" id="statsView">
+        <div class="stat-card"><span id="countPatterns">100</span><p>Padrões cadastrados</p></div>
+        <div class="stat-card"><span>9</span><p>Categorias Siemens</p></div>
+        <div class="stat-card"><span>LAD</span><p>Desenho conceitual por padrão</p></div>
+        <div class="stat-card"><span>Offline</span><p>PWA instalável</p></div>
+      </section>
+
+      <section class="toolbar view" id="patternsToolbar">
+        <div class="search-box"><span>⌕</span><input id="searchInput" type="search" placeholder="Buscar: motor, TON, IHM, inversor, Profinet, DB, UDT..." /></div>
+        <select id="categoryFilter"><option value="Todas">Todas as categorias</option></select>
+        <select id="levelFilter"><option value="Todos">Todos os níveis</option><option>Básico</option><option>Intermediário</option><option>Avançado</option></select>
+        <select id="sortFilter"><option value="id">Ordenar por número</option><option value="title">Ordenar por nome</option><option value="level">Ordenar por nível</option></select>
+      </section>
+
+      <section class="patterns-grid view" id="patternsGrid"></section>
+
+      <section class="detail view" id="detailView" hidden>
+        <button class="back-btn" id="backBtn">← Voltar para biblioteca</button>
+        <article class="detail-card" id="detailContent"></article>
+      </section>
+
+      <section class="info-page view" id="simulatorView" hidden>
+        <h2>Simulação Didática</h2>
+        <p>Escolha um padrão e avance pelas etapas para explicar a lógica em sala de aula ou na bancada.</p>
+        <div class="sim-controls">
+          <select id="simPatternSelect"></select>
+          <button class="primary" id="simNext">Avançar etapa</button>
+          <button class="secondary" id="simReset">Reiniciar</button>
+        </div>
+        <div class="sim-card">
+          <div id="simTitle" class="sim-title"></div>
+          <div id="simLadder" class="ladder-render"></div>
+          <div id="simStep" class="sim-step"></div>
+        </div>
+      </section>
+
+      <section class="info-page view" id="tiaView" hidden>
+        <h2>Passo a passo padrão no TIA Portal</h2>
+        <div class="timeline">
+          <div><strong>1. Criar projeto</strong><span>Selecionar CPU S7-1200/S7-1500, fonte, módulos e comunicação.</span></div>
+          <div><strong>2. Device Configuration</strong><span>Conferir IP, Profinet, módulos de DI/DO/AI/AO e IHM.</span></div>
+          <div><strong>3. PLC Tags</strong><span>Nomear entradas, saídas, memórias, setpoints, status e alarmes com comentários.</span></div>
+          <div><strong>4. Blocos</strong><span>Organizar OB1, FCs, FBs, DBs, Instance DBs e UDTs.</span></div>
+          <div><strong>5. LAD por redes</strong><span>Cada rede deve ter uma função clara: comando, selo, falha, temporização, saída e diagnóstico.</span></div>
+          <div><strong>6. IHM Siemens</strong><span>Criar telas de operação, alarmes, manutenção, diagnóstico e setpoints.</span></div>
+          <div><strong>7. Inversor/Profinet</strong><span>Padronizar word de comando, status, setpoint e feedback de velocidade.</span></div>
+          <div><strong>8. Teste e comissionamento</strong><span>Compilar, simular, monitorar online, testar I/O e registrar ajustes.</span></div>
+        </div>
+      </section>
+
+      <section class="info-page view" id="favoritesView" hidden>
+        <h2>Favoritos</h2>
+        <p>Os padrões marcados ficam salvos neste navegador.</p>
+        <div class="patterns-grid compact" id="favoritesGrid"></div>
+      </section>
+
+      <section class="info-page view" id="aboutView" hidden>
+        <h2>Sobre o projeto</h2>
+        <p><strong>LAD Pocket Pro Siemens V2</strong> é um PWA/App Web didático para consulta rápida de padrões LAD aplicados a CLP Siemens no TIA Portal.</p>
+        <p>Identidade visual SENAI HUB, foco em comandos elétricos, automação industrial, IHM Siemens, inversores, Profinet e boas práticas de programação.</p>
+      </section>
+
+      <footer class="footer">SENAI HUB — Inovação e Tecnologia | LAD Pocket Pro Siemens V2 | Desenvolvido por Joelson M. Mendes</footer>
+    </main>
+  </div>
+  <div id="toast" class="toast" hidden></div>
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/pwa.js"></script>
+</body>
+</html>
