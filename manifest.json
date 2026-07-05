@@ -1,21 +1,14 @@
 {
-  "name": "LAD Pocket Pro Siemens V2",
+  "name": "LAD Pocket Pro Siemens",
   "short_name": "LAD Siemens",
-  "description": "PWA com 100 padrões LAD para CLP Siemens no TIA Portal.",
+  "description": "PWA SENAI HUB com padrões LAD, TIA Portal, IHM, inversores e assistente Siemens.",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#061426",
-  "theme_color": "#061426",
+  "background_color": "#071a33",
+  "theme_color": "#071a33",
+  "orientation": "portrait-primary",
   "icons": [
-    {
-      "src": "assets/icons/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "assets/icons/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    }
+    {"src":"assets/logo_senai_hub.webp","sizes":"192x192","type":"image/webp","purpose":"any maskable"},
+    {"src":"assets/logo_senai_hub.webp","sizes":"512x512","type":"image/webp","purpose":"any maskable"}
   ]
 }
