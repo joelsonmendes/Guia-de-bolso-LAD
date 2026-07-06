@@ -4,58 +4,1849 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#071a33" />
+  <meta name="description" content="LAD Pocket Pro Siemens V3 — Ferramenta PWA para engenharia de automação Siemens" />
   <title>LAD Pocket Pro Siemens V3</title>
   <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="css/style.css" />
-  <link rel="icon" href="assets/logo_senai_hub.webp" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='12' fill='%23071a33'/><text x='32' y='44' font-size='40' text-anchor='middle' fill='%2322c55e'>⚡</text></svg>" />
+  <script src="https://cdn.jsdelivr.net/npm/dexie@4/dist/dexie.min.js"></script>
+  <style>
+    :root {
+      --bg-primary: #071a33;
+      --bg-secondary: #0d2847;
+      --bg-tertiary: #122f52;
+      --bg-card: #15365c;
+      --bg-hover: #1a4068;
+      --text-primary: #e8edf2;
+      --text-secondary: #a0b5cc;
+      --text-muted: #6b8299;
+      --accent: #22c55e;
+      --accent-hover: #16a34a;
+      --accent-dim: rgba(34, 197, 94, 0.15);
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --info: #3b82f6;
+      --border: #1e3d5c;
+      --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+      --radius: 10px;
+      --radius-sm: 6px;
+      --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      --sidebar-width: 260px;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      font-size: 15px;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      min-height: 100dvh;
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    /* ── App Shell ── */
+    .app-shell {
+      display: flex;
+      min-height: 100vh;
+      min-height: 100dvh;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: var(--sidebar-width);
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      z-index: 100;
+      transition: transform var(--transition);
+      overflow-y: auto;
+    }
+
+    .sidebar.closed {
+      transform: translateX(-100%);
+    }
+
+    .brand-block {
+      padding: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(135deg, var(--bg-primary), var(--bg-secondary));
+    }
+
+    .brand-logo {
+      width: 42px;
+      height: 42px;
+      border-radius: var(--radius-sm);
+      object-fit: contain;
+      background: var(--bg-tertiary);
+      padding: 4px;
+    }
+
+    .brand-block strong {
+      display: block;
+      font-size: 1.05rem;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+
+    .brand-block span {
+      font-size: 0.75rem;
+      color: var(--accent);
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .main-nav {
+      flex: 1;
+      padding: 0.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .main-nav button {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      width: 100%;
+      padding: 0.65rem 0.85rem;
+      border: none;
+      border-radius: var(--radius-sm);
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all var(--transition);
+      text-align: left;
+      position: relative;
+    }
+
+    .main-nav button:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    .main-nav button.active {
+      background: var(--accent-dim);
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .main-nav button.active::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 3px;
+      height: 60%;
+      background: var(--accent);
+      border-radius: 0 3px 3px 0;
+    }
+
+    .nav-icon {
+      font-size: 1.1rem;
+      width: 24px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .sidebar-footer {
+      padding: 0.75rem 1rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      flex-shrink: 0;
+      transition: background var(--transition);
+    }
+
+    .status-dot.offline {
+      background: var(--danger);
+    }
+
+    /* ── Main Content ── */
+    .main-content {
+      flex: 1;
+      margin-left: var(--sidebar-width);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      min-height: 100dvh;
+      transition: margin var(--transition);
+    }
+
+    .main-content.expanded {
+      margin-left: 0;
+    }
+
+    /* ── Topbar ── */
+    .topbar {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      padding: 0.75rem 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(12px);
+    }
+
+    .menu-toggle {
+      background: none;
+      border: none;
+      color: var(--text-primary);
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0.25rem 0.5rem;
+      border-radius: var(--radius-sm);
+      transition: background var(--transition);
+      flex-shrink: 0;
+    }
+
+    .menu-toggle:hover {
+      background: var(--bg-hover);
+    }
+
+    .topbar-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .eyebrow {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 2px;
+    }
+
+    #pageTitle {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn {
+      padding: 0.5rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      white-space: nowrap;
+    }
+
+    .btn:hover {
+      background: var(--bg-hover);
+      border-color: var(--accent);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #000;
+      font-weight: 600;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+    }
+
+    .btn-sm {
+      padding: 0.3rem 0.6rem;
+      font-size: 0.7rem;
+    }
+
+    .btn-danger {
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+
+    .btn-danger:hover {
+      background: rgba(239, 68, 68, 0.15);
+    }
+
+    .btn-icon {
+      padding: 0.4rem;
+      width: 32px;
+      height: 32px;
+      justify-content: center;
+      border-radius: 50%;
+    }
+
+    /* ── Search ── */
+    .search-wrapper {
+      position: relative;
+    }
+
+    #globalSearch {
+      padding: 0.45rem 0.75rem 0.45rem 2rem;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-size: 0.8rem;
+      width: 180px;
+      transition: all var(--transition);
+      outline: none;
+    }
+
+    #globalSearch:focus {
+      width: 260px;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-dim);
+    }
+
+    #globalSearch::placeholder {
+      color: var(--text-muted);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      pointer-events: none;
+    }
+
+    /* ── View Container ── */
+    .view {
+      flex: 1;
+      padding: 1.5rem;
+      overflow-y: auto;
+      animation: fadeIn 0.25s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      transition: all var(--transition);
+    }
+
+    .card:hover {
+      border-color: var(--accent);
+      box-shadow: var(--shadow);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+    }
+
+    .card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .card-subtitle {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .grid {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .grid-2 {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .grid-3 {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .grid-4 {
+      grid-template-columns: repeat(4, 1fr);
+    }
+
+    @media (max-width: 1200px) {
+      .grid-4 {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .grid-2,
+      .grid-3,
+      .grid-4 {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        transform: translateX(-100%);
+      }
+
+      .sidebar.open {
+        transform: translateX(0);
+      }
+
+      .main-content {
+        margin-left: 0 !important;
+      }
+
+      #globalSearch {
+        width: 120px;
+      }
+
+      #globalSearch:focus {
+        width: 160px;
+      }
+    }
+
+    /* ── Table ── */
+    .table-wrapper {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+
+    th,
+    td {
+      padding: 0.6rem 0.85rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      font-weight: 600;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      position: sticky;
+      top: 0;
+    }
+
+    tr:hover td {
+      background: var(--bg-hover);
+    }
+
+    /* ── Form ── */
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 0.3rem;
+    }
+
+    input,
+    textarea,
+    select {
+      width: 100%;
+      padding: 0.55rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-size: 0.85rem;
+      font-family: inherit;
+      transition: border var(--transition);
+      outline: none;
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-dim);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    /* ── Tags / Chips ── */
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.2rem 0.6rem;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .chip.accent {
+      background: var(--accent-dim);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .chip .chip-close {
+      cursor: pointer;
+      font-size: 0.85rem;
+      line-height: 1;
+      opacity: 0.6;
+    }
+
+    .chip .chip-close:hover {
+      opacity: 1;
+      color: var(--danger);
+    }
+
+    /* ── Toast ── */
+    .toast-container {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .toast {
+      padding: 0.75rem 1.25rem;
+      border-radius: var(--radius-sm);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      font-size: 0.85rem;
+      box-shadow: var(--shadow);
+      animation: slideIn 0.3s ease;
+      max-width: 360px;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .toast.success {
+      border-left: 3px solid var(--accent);
+    }
+
+    .toast.error {
+      border-left: 3px solid var(--danger);
+    }
+
+    .toast.warning {
+      border-left: 3px solid var(--warning);
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(100%);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    /* ── Skeleton ── */
+    .skeleton {
+      background: linear-gradient(90deg, var(--bg-tertiary) 25%, var(--bg-hover) 50%, var(--bg-tertiary) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: var(--radius-sm);
+    }
+
+    @keyframes shimmer {
+      0% {
+        background-position: 200% 0;
+      }
+      100% {
+        background-position: -200% 0;
+      }
+    }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .modal {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      max-width: 500px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: var(--shadow);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .modal-header h3 {
+      font-size: 1.1rem;
+      color: var(--text-primary);
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0.25rem;
+      line-height: 1;
+    }
+
+    .modal-close:hover {
+      color: var(--text-primary);
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      margin-top: 1.25rem;
+    }
+
+    /* ── Badge ── */
+    .badge {
+      display: inline-block;
+      padding: 0.15rem 0.5rem;
+      border-radius: 10px;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+
+    .badge-success {
+      background: rgba(34, 197, 94, 0.2);
+      color: var(--accent);
+    }
+
+    .badge-warning {
+      background: rgba(245, 158, 11, 0.2);
+      color: var(--warning);
+    }
+
+    .badge-info {
+      background: rgba(59, 130, 246, 0.2);
+      color: var(--info);
+    }
+
+    /* ── Empty State ── */
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--text-muted);
+    }
+
+    .empty-state .empty-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+
+    .empty-state p {
+      margin-bottom: 0.5rem;
+    }
+
+    /* ── Ladder Simulator ── */
+    .ladder-rung {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem;
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      margin-bottom: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .ladder-contact {
+      width: 40px;
+      height: 24px;
+      border: 2px solid var(--text-secondary);
+      border-radius: 2px;
+      background: var(--bg-tertiary);
+      position: relative;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+
+    .ladder-contact.closed {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .ladder-coil {
+      width: 40px;
+      height: 24px;
+      border: 2px solid var(--text-secondary);
+      border-radius: 12px;
+      background: var(--bg-tertiary);
+      transition: all var(--transition);
+    }
+
+    .ladder-coil.energized {
+      background: var(--accent);
+      border-color: var(--accent);
+      box-shadow: 0 0 10px var(--accent-dim);
+    }
+
+    .ladder-power-rail {
+      width: 4px;
+      height: 100%;
+      background: var(--danger);
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .ladder-power-rail.active {
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent-dim);
+    }
+
+    /* ── Utility ── */
+    .flex {
+      display: flex;
+    }
+    .flex-wrap {
+      flex-wrap: wrap;
+    }
+    .gap-1 {
+      gap: 0.5rem;
+    }
+    .gap-2 {
+      gap: 1rem;
+    }
+    .items-center {
+      align-items: center;
+    }
+    .justify-between {
+      justify-content: space-between;
+    }
+    .mb-1 {
+      margin-bottom: 0.5rem;
+    }
+    .mb-2 {
+      margin-bottom: 1rem;
+    }
+    .mb-3 {
+      margin-bottom: 1.5rem;
+    }
+    .mt-2 {
+      margin-top: 1rem;
+    }
+    .mt-3 {
+      margin-top: 1.5rem;
+    }
+    .text-muted {
+      color: var(--text-muted);
+    }
+    .text-accent {
+      color: var(--accent);
+    }
+    .text-sm {
+      font-size: 0.8rem;
+    }
+    .text-xs {
+      font-size: 0.7rem;
+    }
+    .text-center {
+      text-align: center;
+    }
+    .w-full {
+      width: 100%;
+    }
+    .hidden {
+      display: none !important;
+    }
+
+    /* ── Favorites star ── */
+    .star-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1.2rem;
+      transition: transform var(--transition);
+      padding: 0.2rem;
+    }
+
+    .star-btn:hover {
+      transform: scale(1.2);
+    }
+
+    .star-btn.active {
+      color: var(--warning);
+    }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--text-muted);
+    }
+  </style>
 </head>
 <body>
   <div class="app-shell">
+    <!-- ═══════════ SIDEBAR ═══════════ -->
     <aside class="sidebar" id="sidebar">
       <div class="brand-block">
-        <img src="assets/logo_senai_hub.webp" alt="SENAI HUB" class="brand-logo" />
+        <div style="font-size:2rem;">⚡</div>
         <div>
           <strong>LAD Pocket Pro</strong>
           <span>Siemens V3</span>
         </div>
       </div>
       <nav class="main-nav" id="mainNav" aria-label="Menu principal">
-        <button data-view="home" class="active">Início</button>
-        <button data-view="patterns">Padrões LAD</button>
-        <button data-view="newProject">Projeto Novo</button>
-        <button data-view="tags">Banco de Tags</button>
-        <button data-view="tia">TIA Portal</button>
-        <button data-view="hmi">IHM Siemens</button>
-        <button data-view="drive">Inversor Siemens</button>
-        <button data-view="simulator">Simulador</button>
-        <button data-view="assistant">Assistente Siemens Pro</button>
-        <button data-view="favorites">Favoritos</button>
-        <button data-view="about">Sobre</button>
+        <button data-view="home" class="active"><span class="nav-icon">🏠</span> Início</button>
+        <button data-view="patterns"><span class="nav-icon">📐</span> Padrões LAD</button>
+        <button data-view="newProject"><span class="nav-icon">📁</span> Projeto Novo</button>
+        <button data-view="tags"><span class="nav-icon">🏷️</span> Banco de Tags</button>
+        <button data-view="tia"><span class="nav-icon">🖥️</span> TIA Portal</button>
+        <button data-view="hmi"><span class="nav-icon">📟</span> IHM Siemens</button>
+        <button data-view="drive"><span class="nav-icon">⚙️</span> Inversor Siemens</button>
+        <button data-view="simulator"><span class="nav-icon">🔌</span> Simulador LAD</button>
+        <button data-view="assistant"><span class="nav-icon">🤖</span> Assistente Siemens</button>
+        <button data-view="favorites"><span class="nav-icon">⭐</span> Favoritos</button>
+        <button data-view="about"><span class="nav-icon">ℹ️</span> Sobre</button>
       </nav>
       <div class="sidebar-footer">
-        <span class="status-dot"></span>
-        PWA offline habilitado
+        <span class="status-dot" id="statusDot"></span>
+        <span id="statusLabel">Online</span>
       </div>
     </aside>
 
-    <main class="main-content">
+    <!-- ═══════════ MAIN ═══════════ -->
+    <main class="main-content" id="mainContent">
       <header class="topbar">
         <button class="menu-toggle" id="menuToggle" aria-label="Abrir menu">☰</button>
-        <div>
+        <div class="topbar-info">
           <p class="eyebrow">SENAI HUB · Inovação e Tecnologia</p>
           <h1 id="pageTitle">LAD Pocket Pro Siemens</h1>
         </div>
-        <button class="install-btn" id="installBtn" hidden>Instalar App</button>
+        <div class="topbar-actions">
+          <div class="search-wrapper">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="globalSearch" placeholder="Buscar tags, projetos…" />
+          </div>
+          <button class="btn" id="installBtn" hidden title="Instalar App">📲 Instalar</button>
+          <button class="btn" id="exportAllBtn" title="Exportar dados">💾 Backup</button>
+          <span style="font-size:0.7rem;color:var(--text-muted)" id="clockDisplay"></span>
+        </div>
       </header>
 
       <section id="appView" class="view"></section>
     </main>
   </div>
 
-  <div class="toast" id="toast"></div>
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
 
-  <script src="js/data.js"></script>
-  <script src="js/app.js"></script>
-  <script src="js/pwa.js"></script>
+  <!-- ═══════════ SCRIPTS ═══════════ -->
+  <script>
+    /* ═══════════════════════════════════════════
+       LAD POCKET PRO SIEMENS V3
+       Single-File PWA Application
+       ═══════════════════════════════════════════ */
+
+    // ── Database: Dexie.js (IndexedDB) ──
+    const db = new Dexie('LADPocketDB');
+    db.version(2).stores({
+      projects: '++id, name, createdAt, modifiedAt',
+      tags: '++id, name, address, dataType, comment, projectId, [projectId+name]',
+      favorites: '++id, type, refId, label, addedAt',
+      settings: '&key',
+    });
+
+    // Seed inicial para demonstração
+    db.on('ready', async () => {
+      const count = await db.projects.count();
+      if (count === 0) {
+        await seedDatabase();
+      }
+    });
+
+    async function seedDatabase() {
+      const now = new Date().toISOString();
+      const projId = await db.projects.add({
+        name: 'Projeto Exemplo - Esteira Transportadora',
+        createdAt: now,
+        modifiedAt: now,
+        description: 'Projeto demonstrativo CLP S7-1200',
+      });
+      await db.tags.bulkAdd([
+        { name: 'START_BTN', address: '%I0.0', dataType: 'Bool', comment: 'Botão de partida', projectId: projId },
+        { name: 'STOP_BTN', address: '%I0.1', dataType: 'Bool', comment: 'Botão de parada (NF)', projectId: projId },
+        { name: 'SENSOR_PRES', address: '%I0.2', dataType: 'Bool', comment: 'Sensor de presença', projectId: projId },
+        { name: 'MOTOR_CMD', address: '%Q0.0', dataType: 'Bool', comment: 'Comando do motor', projectId: projId },
+        { name: 'SPEED_SP', address: '%MW10', dataType: 'Int', comment: 'Velocidade de referência', projectId: projId },
+        { name: 'TIMER_RUN', address: '%T0', dataType: 'Timer', comment: 'Temporizador de partida', projectId: projId },
+        { name: 'COUNTER_PCS', address: '%C0', dataType: 'Counter', comment: 'Contador de peças', projectId: projId },
+        { name: 'EMERGENCY', address: '%I0.5', dataType: 'Bool', comment: 'Botão de emergência', projectId: projId },
+        { name: 'LAMP_RUN', address: '%Q0.1', dataType: 'Bool', comment: 'Sinalizador em operação', projectId: projId },
+        { name: 'LAMP_ALARM', address: '%Q0.2', dataType: 'Bool', comment: 'Sinalizador de alarme', projectId: projId },
+      ]);
+      await db.favorites.bulkAdd([
+        { type: 'pattern', refId: 'selo', label: 'Circuito de Selo', addedAt: now },
+        { type: 'pattern', refId: 'partida', label: 'Partida Direta', addedAt: now },
+      ]);
+    }
+
+    // ── State Management ──
+    const state = {
+      activeView: 'home',
+      activeProjectId: null,
+      searchQuery: '',
+      isOnline: navigator.onLine,
+    };
+
+    const listeners = new Map();
+    function onStateChange(key, fn) {
+      if (!listeners.has(key)) listeners.set(key, []);
+      listeners.get(key).push(fn);
+    }
+    function setState(key, value) {
+      state[key] = value;
+      (listeners.get(key) || []).forEach(fn => fn(value));
+    }
+
+    // ── Router ──
+    const routeConfig = {
+      home: { title: 'Início — LAD Pocket Pro' },
+      patterns: { title: 'Padrões LAD — LAD Pocket Pro' },
+      newProject: { title: 'Novo Projeto — LAD Pocket Pro' },
+      tags: { title: 'Banco de Tags — LAD Pocket Pro' },
+      tia: { title: 'TIA Portal — LAD Pocket Pro' },
+      hmi: { title: 'IHM Siemens — LAD Pocket Pro' },
+      drive: { title: 'Inversor Siemens — LAD Pocket Pro' },
+      simulator: { title: 'Simulador LAD — LAD Pocket Pro' },
+      assistant: { title: 'Assistente Siemens Pro — LAD Pocket Pro' },
+      favorites: { title: 'Favoritos — LAD Pocket Pro' },
+      about: { title: 'Sobre — LAD Pocket Pro' },
+    };
+
+    function navigate(viewId, pushState = true) {
+      if (!routeConfig[viewId]) return;
+      setState('activeView', viewId);
+      document.getElementById('pageTitle').textContent = routeConfig[viewId].title;
+      document.title = routeConfig[viewId].title;
+      if (pushState) history.pushState({ view: viewId }, '', `#/${viewId}`);
+      // Atualizar sidebar
+      document.querySelectorAll('.main-nav button').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.view === viewId);
+      });
+      renderView(viewId);
+    }
+
+    window.addEventListener('popstate', (e) => {
+      const view = e.state?.view || 'home';
+      navigate(view, false);
+    });
+
+    // ── Toast System ──
+    function showToast(message, type = 'info', duration = 3500) {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+      toast.innerHTML = `<span>${icons[type] || 'ℹ️'}</span> ${message}`;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(100%)';
+        toast.style.transition = 'all 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+      }, duration);
+    }
+
+    // ── Modal Helper ──
+    function showModal(title, contentHtml, onConfirm) {
+      const overlay = document.createElement('div');
+      overlay.className = 'modal-overlay';
+      overlay.innerHTML = `
+        <div class="modal">
+          <div class="modal-header">
+            <h3>${title}</h3>
+            <button class="modal-close">&times;</button>
+          </div>
+          <div class="modal-body">${contentHtml}</div>
+          <div class="modal-actions">
+            <button class="btn btn-cancel">Cancelar</button>
+            <button class="btn btn-primary btn-confirm">Confirmar</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+      overlay.querySelector('.modal-close').onclick = () => overlay.remove();
+      overlay.querySelector('.btn-cancel').onclick = () => overlay.remove();
+      overlay.querySelector('.btn-confirm').onclick = () => {
+        if (onConfirm) onConfirm(overlay);
+        overlay.remove();
+      };
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) overlay.remove();
+      });
+      return overlay;
+    }
+
+    // ── Confirmation Dialog ──
+    function confirmAction(title, message) {
+      return new Promise((resolve) => {
+        showModal(title, `<p>${message}</p>`, (overlay) => {
+          resolve(true);
+        });
+        // Override cancel
+        const overlay = document.querySelector('.modal-overlay');
+        if (overlay) {
+          overlay.querySelector('.btn-cancel').addEventListener('click', () => resolve(false), { once: true });
+          overlay.querySelector('.modal-close').addEventListener('click', () => resolve(false), { once: true });
+        }
+      });
+    }
+
+    // ── View Renderer ──
+    const viewRenderers = {
+      home,
+      patterns,
+      newProject,
+      tags,
+      tia,
+      hmi,
+      drive,
+      simulator,
+      assistant,
+      favorites,
+      about,
+    };
+
+    async function renderView(viewId) {
+      const container = document.getElementById('appView');
+      container.innerHTML = '<div class="skeleton" style="height:300px;"></div>';
+      try {
+        const html = await viewRenderers[viewId]();
+        container.innerHTML = html;
+        // Re-bind events after render
+        bindViewEvents(viewId);
+      } catch (err) {
+        console.error('Erro ao renderizar view:', err);
+        container.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><p>Erro ao carregar a visualização.</p><p class="text-sm text-muted">${err.message}</p></div>`;
+      }
+    }
+
+    function bindViewEvents(viewId) {
+      // Global bindings for each view
+      document.querySelectorAll('.star-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const { type, refId, label } = btn.dataset;
+          const existing = await db.favorites.where({ type, refId }).first();
+          if (existing) {
+            await db.favorites.delete(existing.id);
+            btn.classList.remove('active');
+            btn.textContent = '☆';
+            showToast(`"${label}" removido dos favoritos`, 'info');
+          } else {
+            await db.favorites.add({ type, refId, label, addedAt: new Date().toISOString() });
+            btn.classList.add('active');
+            btn.textContent = '⭐';
+            showToast(`"${label}" adicionado aos favoritos!`, 'success');
+          }
+        });
+      });
+    }
+
+    // ═══════════════════════ VIEW RENDERERS ═══════════════════════
+
+    async function home() {
+      const projects = await db.projects.orderBy('modifiedAt').reverse().toArray();
+      const favCount = await db.favorites.count();
+      const tagCount = await db.tags.count();
+      const recentProjects = projects.slice(0, 3);
+
+      const recentHtml = recentProjects.length ? recentProjects.map(p => `
+        <div class="card" style="cursor:pointer" onclick="openProject(${p.id})">
+          <div class="card-header">
+            <span class="card-title">📁 ${escapeHtml(p.name)}</span>
+            <span class="text-xs text-muted">${formatDate(p.modifiedAt)}</span>
+          </div>
+          <p class="text-sm text-muted">${escapeHtml(p.description || 'Sem descrição')}</p>
+        </div>
+      `).join('') : '<div class="empty-state"><div class="empty-icon">📂</div><p>Nenhum projeto encontrado</p></div>';
+
+      return `
+        <h2 style="margin-bottom:1.5rem;">👋 Bem-vindo ao <span class="text-accent">LAD Pocket Pro</span></h2>
+        <div class="grid grid-3 mb-3">
+          <div class="card text-center">
+            <div style="font-size:2.5rem;">📁</div>
+            <div style="font-size:1.8rem;font-weight:700;">${projects.length}</div>
+            <div class="text-sm text-muted">Projetos</div>
+          </div>
+          <div class="card text-center">
+            <div style="font-size:2.5rem;">🏷️</div>
+            <div style="font-size:1.8rem;font-weight:700;">${tagCount}</div>
+            <div class="text-sm text-muted">Tags</div>
+          </div>
+          <div class="card text-center">
+            <div style="font-size:2.5rem;">⭐</div>
+            <div style="font-size:1.8rem;font-weight:700;">${favCount}</div>
+            <div class="text-sm text-muted">Favoritos</div>
+          </div>
+        </div>
+        <div class="flex justify-between items-center mb-2">
+          <h3>📌 Projetos Recentes</h3>
+          <button class="btn btn-primary btn-sm" onclick="navigate('newProject')">+ Novo Projeto</button>
+        </div>
+        <div class="grid grid-2">
+          ${recentHtml}
+        </div>
+        <div class="card mt-3">
+          <h4 class="mb-1">⚡ Atalhos Rápidos</h4>
+          <div class="flex flex-wrap gap-1">
+            <button class="btn btn-sm" onclick="navigate('simulator')">🔌 Abrir Simulador</button>
+            <button class="btn btn-sm" onclick="navigate('tags')">🏷️ Gerenciar Tags</button>
+            <button class="btn btn-sm" onclick="navigate('patterns')">📐 Ver Padrões LAD</button>
+            <button class="btn btn-sm" onclick="navigate('favorites')">⭐ Meus Favoritos</button>
+          </div>
+        </div>
+      `;
+    }
+
+    async function patterns() {
+      const patterns = [
+        { id: 'selo', name: 'Circuito de Selo (Latch)', desc: 'Mantém saída ativa após pulso de entrada. Utiliza contato de selo em paralelo com o botão de partida.', code: 'START (%I0.0) em paralelo com Q0.0 → em série com STOP_NF (%I0.1) → bobina Q0.0', uses: 'Partida de motores, iluminação, sistemas de segurança' },
+        { id: 'partida', name: 'Partida Direta com Retenção', desc: 'Aciona motor trifásico através de contator, com proteção térmica e botão de emergência.', code: 'START + SELO → STOP_NF → EMERG_NF → RELÉ_TÉRMICO_NF → bobina MOTOR (Q0.0)', uses: 'Motores de baixa potência, ventiladores, bombas' },
+        { id: 'reversao', name: 'Reversão de Motor', desc: 'Permite reversão de sentido com intertravamento elétrico e por software.', code: 'HORÁRIO: START_FWD + SELO_FWD → STOP → NOT Q0.1 → bobina Q0.0\nANTI-HORÁRIO: START_REV + SELO_REV → STOP → NOT Q0.0 → bobina Q0.1', uses: 'Esteiras reversíveis, portões, pontes rolantes' },
+        { id: 'estrela', name: 'Partida Estrela-Triângulo', desc: 'Reduz corrente de partida de motores de alta potência. Utiliza 3 contatores e temporizador.', code: 'START → K1 (Principal) + K2 (Estrela) + Timer T0\nT0 atinge preset → desliga K2, liga K3 (Triângulo)', uses: 'Motores acima de 5 CV, compressores, bombas centrífugas' },
+        { id: 'temporizador', name: 'Temporizador TON/TOF', desc: 'Controla saídas com atraso de tempo. TON atrasa a ativação, TOF atrasa a desativação.', code: 'TON: Input → Timer TON(IN:=I0.0, PT:=T#5s)\nSe Q do timer = TRUE → bobina Q0.0', uses: 'Delay de partida, ventilação forçada, ciclos automáticos' },
+        { id: 'contador', name: 'Contador CTU (Up Counter)', desc: 'Incrementa contador a cada pulso, acionando saída ao atingir preset.', code: 'SENSOR → CTU(CU:=I0.2, PV:=100)\nSe CV >= PV → bobina Q0.0 (Lote completo)', uses: 'Contagem de peças, controle de lotes, dosagem' },
+        { id: 'flipflop', name: 'Flip-Flop / Alternância', desc: 'Alterna estado da saída a cada pulso de entrada (botão liga/desliga).', code: 'BOTÃO → detecção de borda de subida → NOT Q0.0 → Q0.0\n(usa flag auxiliar para borda)', uses: 'Iluminação com único botão, comando bistável' },
+        { id: 'alarme', name: 'Circuito de Alarme com Reset', desc: 'Sinaliza condição anormal e mantém indicação mesmo após normalização, até reset.', code: 'CONDIÇÃO_ALARME → SET ALARM_FLAG (M0.0)\nALARM_FLAG → LAMP_ALARM (Q0.1)\nRESET_BTN → RESET ALARM_FLAG', uses: 'Sinalização de falhas, sistemas de supervisão' },
+      ];
+
+      const favIds = (await db.favorites.where('type').equals('pattern').toArray()).map(f => f.refId);
+
+      return `
+        <div class="flex justify-between items-center mb-2">
+          <h2>📐 Padrões de Programação LAD</h2>
+          <span class="text-sm text-muted">${patterns.length} padrões disponíveis</span>
+        </div>
+        <p class="text-sm text-muted mb-3">Padrões de lógica ladder amplamente utilizados em programação de CLPs Siemens. Clique para copiar a descrição.</p>
+        <div class="grid grid-2">
+          ${patterns.map(p => {
+            const isFav = favIds.includes(p.id);
+            return `
+              <div class="card" id="pattern-${p.id}">
+                <div class="card-header">
+                  <span class="card-title">${p.name}</span>
+                  <button class="star-btn ${isFav ? 'active' : ''}" data-type="pattern" data-ref-id="${p.id}" data-label="${escapeHtml(p.name)}">${isFav ? '⭐' : '☆'}</button>
+                </div>
+                <p class="text-sm mb-1">${p.desc}</p>
+                <div style="background:var(--bg-primary);padding:0.6rem;border-radius:var(--radius-sm);font-family:monospace;font-size:0.75rem;white-space:pre-wrap;color:var(--accent);" onclick="copyToClipboard(this.textContent)">${p.code}</div>
+                <div class="mt-2"><span class="badge badge-info">${p.uses}</span></div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }
+
+    async function newProject() {
+      return `
+        <h2 class="mb-2">📁 Criar Novo Projeto</h2>
+        <div class="card" style="max-width:600px;">
+          <form id="newProjectForm">
+            <div class="form-group">
+              <label for="projName">Nome do Projeto *</label>
+              <input type="text" id="projName" placeholder="Ex: Esteira Transportadora - Setor A" required />
+            </div>
+            <div class="form-group">
+              <label for="projDesc">Descrição</label>
+              <textarea id="projDesc" placeholder="Descreva o objetivo do projeto, equipamentos envolvidos..."></textarea>
+            </div>
+            <div class="form-group">
+              <label for="projPLC">Modelo do CLP</label>
+              <select id="projPLC">
+                <option value="">Selecione...</option>
+                <option>S7-1200 (CPU 1214C)</option>
+                <option>S7-1200 (CPU 1215C)</option>
+                <option>S7-1500 (CPU 1511-1 PN)</option>
+                <option>S7-1500 (CPU 1516-3 PN/DP)</option>
+                <option>S7-300 (CPU 315-2 PN/DP)</option>
+                <option>S7-400 (CPU 416-3 PN/DP)</option>
+                <option>LOGO! 8</option>
+                <option>ET 200SP (CPU 1510SP-1 PN)</option>
+              </select>
+            </div>
+            <button type="submit" class="btn btn-primary w-full">🚀 Criar Projeto</button>
+          </form>
+        </div>
+        <script>
+          document.getElementById('newProjectForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('projName').value.trim();
+            const desc = document.getElementById('projDesc').value.trim();
+            const plc = document.getElementById('projPLC').value;
+            if (!name) return showToast('Nome do projeto é obrigatório', 'warning');
+            const now = new Date().toISOString();
+            const id = await db.projects.add({ name, description: desc + (plc ? ' | CLP: ' + plc : ''), createdAt: now, modifiedAt: now });
+            showToast('Projeto criado com sucesso!', 'success');
+            navigate('home');
+          });
+        <\\/script>
+      `;
+    }
+
+    async function tags() {
+      const allTags = await db.tags.toArray();
+      const projects = await db.projects.toArray();
+      const projectMap = Object.fromEntries(projects.map(p => [p.id, p.name]));
+
+      const filterProject = new URLSearchParams(window.location.hash.split('?')[1] || '').get('project') || '';
+
+      let filteredTags = allTags;
+      if (filterProject) {
+        filteredTags = allTags.filter(t => String(t.projectId) === filterProject);
+      }
+
+      const projectOptions = projects.map(p =>
+        `<option value="${p.id}" ${String(p.id) === filterProject ? 'selected' : ''}>${escapeHtml(p.name)}</option>`
+      ).join('');
+
+      return `
+        <div class="flex justify-between items-center mb-2">
+          <h2>🏷️ Banco de Tags</h2>
+          <div class="flex gap-1">
+            <select id="tagProjectFilter" onchange="filterTags(this.value)" style="width:auto;">
+              <option value="">Todos os projetos</option>
+              ${projectOptions}
+            </select>
+            <button class="btn btn-primary btn-sm" id="addTagBtn">+ Nova Tag</button>
+          </div>
+        </div>
+        <p class="text-sm text-muted mb-2">${filteredTags.length} tag(s) encontrada(s)</p>
+        <div class="table-wrapper card">
+          <table>
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>Endereço</th>
+                <th>Tipo</th>
+                <th>Projeto</th>
+                <th>Comentário</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${filteredTags.length ? filteredTags.map(t => `
+                <tr>
+                  <td><strong>${escapeHtml(t.name)}</strong></td>
+                  <td><code style="color:var(--accent);">${escapeHtml(t.address)}</code></td>
+                  <td><span class="chip">${escapeHtml(t.dataType)}</span></td>
+                  <td class="text-sm">${escapeHtml(projectMap[t.projectId] || '—')}</td>
+                  <td class="text-sm text-muted">${escapeHtml(t.comment || '—')}</td>
+                  <td>
+                    <button class="btn btn-sm btn-danger" onclick="deleteTag(${t.id})" title="Excluir">🗑️</button>
+                  </td>
+                </tr>
+              `).join('') : '<tr><td colspan="6" class="text-center text-muted">Nenhuma tag encontrada</td></tr>'}
+            </tbody>
+          </table>
+        </div>
+        <div id="tagFormContainer"></div>
+      `;
+    }
+
+    async function tia() {
+      return `
+        <h2 class="mb-2">🖥️ TIA Portal — Referência Rápida</h2>
+        <div class="grid grid-2">
+          <div class="card">
+            <h3 class="card-title mb-1">📦 Blocos de Programa</h3>
+            <table style="font-size:0.8rem;">
+              <tr><td><strong>OB</strong></td><td>Organization Block — Bloco de organização (Main, Startup, Cyclic Interrupt)</td></tr>
+              <tr><td><strong>FB</strong></td><td>Function Block — Bloco com memória (DB de instância)</td></tr>
+              <tr><td><strong>FC</strong></td><td>Function — Função sem memória</td></tr>
+              <tr><td><strong>DB</strong></td><td>Data Block — Bloco de dados global ou de instância</td></tr>
+            </table>
+          </div>
+          <div class="card">
+            <h3 class="card-title mb-1">🔧 Atalhos TIA Portal</h3>
+            <table style="font-size:0.8rem;">
+              <tr><td><kbd>Ctrl+1</kbd></td><td>Project View</td></tr>
+              <tr><td><kbd>Ctrl+Shift+C</kbd></td><td>Compilar (Compile)</td></tr>
+              <tr><td><kbd>Ctrl+L</kbd></td><td>Download para dispositivo</td></tr>
+              <tr><td><kbd>Ctrl+M</kbd></td><td>Monitorar (Monitor ON/OFF)</td></tr>
+              <tr><td><kbd>F7</kbd></td><td>Compilar bloco atual</td></tr>
+            </table>
+          </div>
+          <div class="card">
+            <h3 class="card-title mb-1">📐 Tipos de Dados Siemens</h3>
+            <table style="font-size:0.8rem;">
+              <tr><td><strong>Bool</strong></td><td>1 bit (TRUE/FALSE)</td></tr>
+              <tr><td><strong>Byte</strong></td><td>8 bits (0-255)</td></tr>
+              <tr><td><strong>Word</strong></td><td>16 bits (0-65535)</td></tr>
+              <tr><td><strong>DWord</strong></td><td>32 bits</td></tr>
+              <tr><td><strong>Int</strong></td><td>16 bits com sinal (-32768 a 32767)</td></tr>
+              <tr><td><strong>Real</strong></td><td>32 bits ponto flutuante</td></tr>
+              <tr><td><strong>Time</strong></td><td>T#1d_2h_30m_15s_500ms</td></tr>
+            </table>
+          </div>
+          <div class="card">
+            <h3 class="card-title mb-1">🔌 Protocolos</h3>
+            <table style="font-size:0.8rem;">
+              <tr><td><strong>PROFINET</strong></td><td>Ethernet industrial, tempo real</td></tr>
+              <tr><td><strong>PROFIBUS</strong></td><td>Fieldbus serial RS-485</td></tr>
+              <tr><td><strong>MODBUS TCP</strong></td><td>Suportado via blocos de biblioteca</td></tr>
+              <tr><td><strong>OPC UA</strong></td><td>Nativo no S7-1500 para IIoT</td></tr>
+              <tr><td><strong>Webserver</strong></td><td>HTTP/HTTPS nativo (S7-1200/1500)</td></tr>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    async function hmi() {
+      const panels = [
+        { model: 'KTP400 Basic', size: '4"', resolution: '480x272', color: '65536', iface: 'PROFINET' },
+        { model: 'KTP700 Basic', size: '7"', resolution: '800x480', color: '65536', iface: 'PROFINET' },
+        { model: 'KTP900 Basic', size: '9"', resolution: '800x480', color: '16,7M', iface: 'PROFINET' },
+        { model: 'TP700 Comfort', size: '7"', resolution: '800x480', color: '16,7M', iface: 'PROFINET/MPI' },
+        { model: 'TP1200 Comfort', size: '12"', resolution: '1280x800', color: '16,7M', iface: 'PROFINET/MPI' },
+        { model: 'MTP1500 Unified', size: '15.6"', resolution: '1920x1080', color: '16,7M', iface: 'PROFINET' },
+      ];
+      return `
+        <h2 class="mb-2">📟 Painéis IHM Siemens — Referência</h2>
+        <div class="grid grid-2">
+          ${panels.map(p => `
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">${p.model}</span>
+                <span class="badge badge-info">${p.iface}</span>
+              </div>
+              <table style="font-size:0.8rem;">
+                <tr><td>Tamanho</td><td><strong>${p.size}</strong></td></tr>
+                <tr><td>Resolução</td><td><strong>${p.resolution}</strong></td></tr>
+                <tr><td>Cores</td><td><strong>${p.color}</strong></td></tr>
+              </table>
+            </div>
+          `).join('')}
+        </div>
+        <div class="card mt-3">
+          <h3 class="mb-1">💡 Dicas de Desenvolvimento IHM</h3>
+          <ul style="padding-left:1.2rem;font-size:0.85rem;color:var(--text-secondary);">
+            <li>Use <strong>Templates</strong> para padronizar cabeçalhos e rodapés</li>
+            <li>Configure <strong>Faceplates</strong> para objetos reutilizáveis (válvulas, motores)</li>
+            <li>Utilize <strong>HMI Tags</strong> com endereçamento simbólico do PLC</li>
+            <li>Implemente níveis de acesso com <strong>User Administration</strong></li>
+            <li>Use <strong>Scheduled Tasks</strong> para logging de dados</li>
+          </ul>
+        </div>
+      `;
+    }
+
+    async function drive() {
+      const drives = [
+        { model: 'SINAMICS V20', power: '0.12-30 kW', voltage: '1AC/3AC 230V-460V', app: 'Bombas, ventiladores, esteiras' },
+        { model: 'SINAMICS G120', power: '0.37-250 kW', voltage: '3AC 380-690V', app: 'Aplicações gerais com vetorial' },
+        { model: 'SINAMICS G120C', power: '0.55-18.5 kW', voltage: '3AC 380-480V', app: 'Compacto para montagem em painel' },
+        { model: 'SINAMICS S120', power: '0.12-1200 kW', voltage: '3AC 380-690V', app: 'Servo acionamento, alta performance' },
+        { model: 'MICROMASTER 440', power: '0.12-250 kW', voltage: '3AC 380-480V', app: 'Uso geral (legado, substituir por G120)' },
+      ];
+      return `
+        <h2 class="mb-2">⚙️ Inversores Siemens — Referência</h2>
+        <div class="table-wrapper card">
+          <table>
+            <thead><tr><th>Modelo</th><th>Potência</th><th>Tensão</th><th>Aplicação Típica</th></tr></thead>
+            <tbody>
+              ${drives.map(d => `
+                <tr>
+                  <td><strong>${d.model}</strong></td>
+                  <td>${d.power}</td>
+                  <td>${d.voltage}</td>
+                  <td class="text-sm">${d.app}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+        <div class="card mt-3">
+          <h3 class="mb-1">📡 Comunicação CLP ↔ Inversor</h3>
+          <p class="text-sm text-muted mb-2">Métodos de controle entre CLP Siemens e inversores SINAMICS:</p>
+          <table style="font-size:0.8rem;">
+            <tr><td><strong>PROFINET</strong></td><td>Telegramas padrão (1, 20, 352) via PN</td></tr>
+            <tr><td><strong>PROFIBUS</strong></td><td>PPO Types (PPO1-5) para controle cíclico</td></tr>
+            <tr><td><strong>USS Protocol</strong></td><td>Comunicação serial RS-485, blocos USS_DRV</td></tr>
+            <tr><td><strong>MODBUS RTU</strong></td><td>Via módulo de comunicação RS-485</td></tr>
+            <tr><td><strong>I/O Digital</strong></td><td>Start/Stop/FWD/REV + Setpoint analógico 0-10V ou 4-20mA</td></tr>
+          </table>
+        </div>
+      `;
+    }
+
+    async function simulator() {
+      return `
+        <h2 class="mb-2">🔌 Simulador de Lógica Ladder</h2>
+        <p class="text-sm text-muted mb-3">Simulação básica de scan cycle. Clique nos contatos para alternar estado e observe o fluxo de potência.</p>
+        <div class="card mb-3">
+          <h4 class="mb-1">Rung 1: Circuito de Selo (Motor com Retenção)</h4>
+          <div class="ladder-rung" id="rung1">
+            <span style="font-weight:700;color:var(--danger);min-width:20px;">+</span>
+            <div class="ladder-contact" id="contact_I0_0" data-address="I0.0" data-na="true" title="START (%I0.0) — NA" onclick="toggleContact(this)"></div>
+            <span style="color:var(--text-muted);font-size:0.7rem;">I0.0</span>
+            <span style="color:var(--text-muted);">┃┃</span>
+            <div class="ladder-contact" id="contact_Q0_0_selo" data-address="Q0.0" data-na="true" title="SELO (Q0.0) — NA" onclick="toggleContact(this)"></div>
+            <span style="color:var(--text-muted);font-size:0.7rem;">Q0.0</span>
+            <span style="color:var(--text-muted);">┃┃</span>
+            <div class="ladder-contact" id="contact_I0_1" data-address="I0.1" data-na="false" title="STOP (%I0.1) — NF" onclick="toggleContact(this)"></div>
+            <span style="color:var(--text-muted);font-size:0.7rem;">I0.1</span>
+            <span style="color:var(--text-muted);">┃┃</span>
+            <div class="ladder-coil" id="coil_Q0_0" data-address="Q0.0" title="MOTOR (Q0.0)"></div>
+            <span style="color:var(--text-muted);font-size:0.7rem;">Q0.0</span>
+          </div>
+          <div style="margin-top:0.5rem;font-size:0.75rem;color:var(--text-muted);">
+            <span>Status: </span>
+            <span id="rung1status">Aguardando...</span>
+          </div>
+        </div>
+        <div class="card mb-3">
+          <h4 class="mb-1">Rung 2: Sensor + Temporizador</h4>
+          <div class="ladder-rung" id="rung2">
+            <span style="font-weight:700;color:var(--danger);min-width:20px;">+</span>
+            <div class="ladder-contact" id="contact_I0_2" data-address="I0.2" data-na="true" title="SENSOR (%I0.2) — NA" onclick="toggleContact(this)"></div>
+            <span style="color:var(--text-muted);font-size:0.7rem;">I0.2</span>
+            <span style="color:var(--text-muted);">┃┃</span>
+            <div class="ladder-coil" id="coil_Q0_1" data-address="Q0.1" title="LAMP (Q0.1)"></div>
+            <span style="color:var(--text-muted);font-size:0.7rem;">Q0.1</span>
+          </div>
+          <div style="margin-top:0.5rem;font-size:0.75rem;color:var(--text-muted);">
+            <span>Status: </span>
+            <span id="rung2status">Aguardando...</span>
+          </div>
+        </div>
+        <div class="flex gap-1">
+          <button class="btn btn-sm" onclick="resetSimulator()">🔄 Reset</button>
+          <button class="btn btn-sm btn-primary" onclick="runScan()">▶️ Executar Scan</button>
+        </div>
+      `;
+    }
+
+    async function assistant() {
+      return `
+        <h2 class="mb-2">🤖 Assistente Siemens Pro</h2>
+        <div class="card" style="max-width:600px;">
+          <p class="text-sm text-muted mb-2">Digite sua dúvida sobre programação Siemens, LAD, TIA Portal, ou hardware:</p>
+          <div class="form-group">
+            <textarea id="assistantQuery" rows="3" placeholder="Ex: Como implementar um contador com reset automático no S7-1200?"></textarea>
+          </div>
+          <button class="btn btn-primary w-full" id="askAssistantBtn">🔍 Consultar</button>
+          <div id="assistantResponse" class="mt-3" style="display:none;">
+            <div class="card" style="background:var(--bg-primary);border-left:3px solid var(--accent);">
+              <strong>💡 Resposta:</strong>
+              <p id="assistantText" class="text-sm mt-1"></p>
+            </div>
+          </div>
+        </div>
+        <script>
+          document.getElementById('askAssistantBtn').addEventListener('click', () => {
+            const query = document.getElementById('assistantQuery').value.trim().toLowerCase();
+            const resp = document.getElementById('assistantResponse');
+            const text = document.getElementById('assistantText');
+            resp.style.display = 'block';
+            if (query.includes('contador') || query.includes('reset')) {
+              text.textContent = 'Para implementar um contador CTU com reset no S7-1200:\\n\\n1. Insira o bloco CTU (Counter Up) na rede LAD\\n2. Conecte o pulso de contagem ao pino CU\\n3. Conecte o reset ao pino R\\n4. Defina PV (Preset Value) — ex: 100\\n5. O pino Q ativa quando CV >= PV\\n6. Use um contato NF do próprio Q conectado ao R para auto-reset ao atingir o limite.';
+            } else if (query.includes('temporizador') || query.includes('ton') || query.includes('timer')) {
+              text.textContent = 'Para usar temporizador TON no TIA Portal:\\n\\n1. Arraste o bloco TON para a rede\\n2. Conecte a condição de ativação ao pino IN\\n3. Configure PT (Preset Time) — ex: T#5s\\n4. O pino Q ativa após o tempo decorrido\\n5. ET mostra o tempo decorrido atual\\n6. Use TON para delay de partida de motores ou ventilação forçada.';
+            } else {
+              text.textContent = '📚 Recomendo verificar a documentação oficial no TIA Portal Help (F1) ou acessar o Siemens Industry Online Support. Para dúvidas específicas sobre LAD, confira os Padrões LAD no menu lateral.';
+            }
+          });
+        <\\/script>
+      `;
+    }
+
+    async function favorites() {
+      const favs = await db.favorites.orderBy('addedAt').reverse().toArray();
+      return `
+        <h2 class="mb-2">⭐ Meus Favoritos</h2>
+        ${favs.length ? `
+          <div class="grid grid-2">
+            ${favs.map(f => `
+              <div class="card flex justify-between items-center">
+                <div>
+                  <strong>${escapeHtml(f.label)}</strong>
+                  <div class="text-xs text-muted">${f.type === 'pattern' ? '📐 Padrão LAD' : '🔖 Item'} · ${formatDate(f.addedAt)}</div>
+                </div>
+                <button class="star-btn active" data-type="${f.type}" data-ref-id="${f.refId}" data-label="${escapeHtml(f.label)}" title="Remover dos favoritos">⭐</button>
+              </div>
+            `).join('')}
+          </div>
+        ` : `
+          <div class="empty-state">
+            <div class="empty-icon">⭐</div>
+            <p>Nenhum favorito ainda</p>
+            <p class="text-sm text-muted">Adicione padrões LAD ou itens aos favoritos clicando na estrela ⭐</p>
+          </div>
+        `}
+      `;
+    }
+
+    async function about() {
+      return `
+        <h2 class="mb-2">ℹ️ Sobre o LAD Pocket Pro</h2>
+        <div class="card" style="max-width:600px;">
+          <div class="text-center mb-2">
+            <div style="font-size:3rem;">⚡</div>
+            <h3>LAD Pocket Pro Siemens V3</h3>
+            <p class="text-sm text-muted">Ferramenta de apoio à programação de CLPs Siemens</p>
+          </div>
+          <table style="font-size:0.85rem;">
+            <tr><td><strong>Versão</strong></td><td>3.0.0</td></tr>
+            <tr><td><strong>Plataforma</strong></td><td>PWA (Progressive Web App)</td></tr>
+            <tr><td><strong>Armazenamento</strong></td><td>IndexedDB (Dexie.js)</td></tr>
+            <tr><td><strong>Offline</strong></td><td>✅ Totalmente funcional</td></tr>
+            <tr><td><strong>Desenvolvido por</strong></td><td>SENAI HUB · Inovação e Tecnologia</td></tr>
+            <tr><td><strong>Tecnologias</strong></td><td>Vanilla JS, Dexie.js, PWA APIs, CSS Custom Properties</td></tr>
+          </table>
+          <div class="mt-3 text-sm text-muted">
+            <p>🖥️ Suporte a referências para: TIA Portal, IHM Siemens, Inversores SINAMICS, CLPs S7-1200/1500/300/400</p>
+            <p class="mt-1">⌨️ Atalhos: <kbd>Ctrl+1-9</kbd> para navegação · <kbd>Ctrl+K</kbd> busca global</p>
+          </div>
+        </div>
+      `;
+    }
+
+    // ═══════════════════════ GLOBAL FUNCTIONS ═══════════════════════
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function formatDate(iso) {
+      if (!iso) return '—';
+      const d = new Date(iso);
+      const now = new Date();
+      const diff = now - d;
+      if (diff < 60000) return 'Agora';
+      if (diff < 3600000) return `${Math.floor(diff / 60000)} min atrás`;
+      if (diff < 86400000) return `${Math.floor(diff / 3600000)}h atrás`;
+      return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        showToast('Copiado para a área de transferência!', 'success', 2000);
+      });
+    }
+
+    async function openProject(id) {
+      setState('activeProjectId', id);
+      const project = await db.projects.get(id);
+      if (project) {
+        showToast(`Projeto "${project.name}" selecionado`, 'info');
+        navigate('tags');
+        setTimeout(() => {
+          const filter = document.getElementById('tagProjectFilter');
+          if (filter) {
+            filter.value = String(id);
+            filter.dispatchEvent(new Event('change'));
+          }
+        }, 100);
+      }
+    }
+
+    async function deleteTag(id) {
+      const confirmed = await confirmAction('Excluir Tag', 'Tem certeza que deseja excluir esta tag? Esta ação não pode ser desfeita.');
+      if (confirmed) {
+        await db.tags.delete(id);
+        showToast('Tag excluída com sucesso!', 'success');
+        renderView('tags');
+      }
+    }
+
+    function filterTags(projectId) {
+      const url = new URL(window.location.href);
+      url.hash = projectId ? `tags?project=${projectId}` : 'tags';
+      window.location.hash = url.hash.substring(1);
+      renderView('tags');
+    }
+
+    // ── Simulator Logic ──
+    window.toggleContact = function (el) {
+      el.classList.toggle('closed');
+      runScan();
+    };
+
+    window.resetSimulator = function () {
+      document.querySelectorAll('.ladder-contact').forEach(c => c.classList.remove('closed'));
+      document.querySelectorAll('.ladder-coil').forEach(c => c.classList.remove('energized'));
+      document.getElementById('rung1status').textContent = 'Resetado';
+      document.getElementById('rung2status').textContent = 'Resetado';
+    };
+
+    window.runScan = function () {
+      // Rung 1: (I0.0 OR Q0.0_selo) AND I0.1(NF) => Q0.0
+      const i00 = document.getElementById('contact_I0_0').classList.contains('closed');
+      const i01 = !document.getElementById('contact_I0_1').classList.contains('closed'); // NF: closed = aberto = FALSE
+      const selo = document.getElementById('coil_Q0_0').classList.contains('energized');
+      const rung1result = (i00 || selo) && i01;
+      const coilQ00 = document.getElementById('coil_Q0_0');
+      if (rung1result) coilQ00.classList.add('energized');
+      else coilQ00.classList.remove('energized');
+      document.getElementById('rung1status').textContent = rung1result ? '✅ Motor LIGADO' : '⏹️ Motor DESLIGADO';
+
+      // Rung 2: I0.2 => Q0.1
+      const i02 = document.getElementById('contact_I0_2').classList.contains('closed');
+      const coilQ01 = document.getElementById('coil_Q0_1');
+      if (i02) coilQ01.classList.add('energized');
+      else coilQ01.classList.remove('energized');
+      document.getElementById('rung2status').textContent = i02 ? '💡 Sinalizador LIGADO' : '⏹️ Sinalizador DESLIGADO';
+    };
+
+    // ═══════════════════════ INITIALIZATION ═══════════════════════
+
+    function init() {
+      // Menu toggle
+      const sidebar = document.getElementById('sidebar');
+      const mainContent = document.getElementById('mainContent');
+      document.getElementById('menuToggle').addEventListener('click', () => {
+        sidebar.classList.toggle('open');
+        if (window.innerWidth <= 768) {
+          sidebar.classList.toggle('closed', !sidebar.classList.contains('open'));
+        }
+      });
+
+      // Close sidebar on outside click (mobile)
+      document.addEventListener('click', (e) => {
+        if (window.innerWidth <= 768 && !sidebar.contains(e.target) && e.target.id !== 'menuToggle') {
+          sidebar.classList.remove('open');
+          sidebar.classList.add('closed');
+        }
+      });
+
+      // Navigation from sidebar
+      document.querySelectorAll('.main-nav button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          navigate(btn.dataset.view);
+          if (window.innerWidth <= 768) {
+            sidebar.classList.remove('open');
+            sidebar.classList.add('closed');
+          }
+        });
+      });
+
+      // Global search
+      const searchInput = document.getElementById('globalSearch');
+      searchInput.addEventListener('input', async (e) => {
+        const query = e.target.value.trim().toLowerCase();
+        setState('searchQuery', query);
+        if (!query) return;
+        // Search across tags
+        const matchingTags = await db.tags.filter(t =>
+          t.name.toLowerCase().includes(query) ||
+          t.address.toLowerCase().includes(query) ||
+          (t.comment || '').toLowerCase().includes(query)
+        ).toArray();
+        if (matchingTags.length > 0) {
+          showToast(`${matchingTags.length} tag(s) encontrada(s) para "${query}"`, 'info', 2500);
+        }
+      });
+
+      // Keyboard shortcuts
+      document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey || e.metaKey) {
+          const shortcuts = {
+            '1': 'home', '2': 'patterns', '3': 'newProject', '4': 'tags',
+            '5': 'tia', '6': 'hmi', '7': 'drive', '8': 'simulator',
+            '9': 'favorites', '0': 'about',
+          };
+          if (shortcuts[e.key]) {
+            e.preventDefault();
+            navigate(shortcuts[e.key]);
+          }
+          if (e.key === 'k' || e.key === 'K') {
+            e.preventDefault();
+            document.getElementById('globalSearch').focus();
+          }
+        }
+      });
+
+      // Online/Offline detection
+      function updateOnlineStatus() {
+        const dot = document.getElementById('statusDot');
+        const label = document.getElementById('statusLabel');
+        if (navigator.onLine) {
+          dot.classList.remove('offline');
+          label.textContent = 'Online';
+        } else {
+          dot.classList.add('offline');
+          label.textContent = 'Offline — dados locais';
+        }
+      }
+      window.addEventListener('online', updateOnlineStatus);
+      window.addEventListener('offline', updateOnlineStatus);
+      updateOnlineStatus();
+
+      // PWA Install
+      let deferredPrompt;
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        document.getElementById('installBtn').hidden = false;
+      });
+      document.getElementById('installBtn').addEventListener('click', async () => {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        const result = await deferredPrompt.userChoice;
+        console.log('Instalação:', result.outcome);
+        deferredPrompt = null;
+        document.getElementById('installBtn').hidden = true;
+      });
+
+      // Export all data (backup)
+      document.getElementById('exportAllBtn').addEventListener('click', async () => {
+        const projects = await db.projects.toArray();
+        const tags = await db.tags.toArray();
+        const favorites = await db.favorites.toArray();
+        const backup = { version: '3.0', exportedAt: new Date().toISOString(), projects, tags, favorites };
+        const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `lad-pocket-backup-${new Date().toISOString().slice(0, 10)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast('Backup exportado com sucesso!', 'success');
+      });
+
+      // Clock
+      function updateClock() {
+        document.getElementById('clockDisplay').textContent =
+          new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      }
+      updateClock();
+      setInterval(updateClock, 30000);
+
+      // Initial route
+      const hash = window.location.hash.replace('#/', '');
+      const initialView = hash && routeConfig[hash.split('?')[0]] ? hash.split('?')[0] : 'home';
+      navigate(initialView, true);
+    }
+
+    // Register Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').then(reg => {
+          console.log('Service Worker registrado:', reg.scope);
+        }).catch(err => {
+          console.warn('Service Worker falhou:', err);
+        });
+      });
+    }
+
+    // Start app
+    document.addEventListener('DOMContentLoaded', init);
+
+    // Expose navigate globally
+    window.navigate = navigate;
+    window.openProject = openProject;
+    window.deleteTag = deleteTag;
+    window.filterTags = filterTags;
+    window.copyToClipboard = copyToClipboard;
+    window.escapeHtml = escapeHtml;
+    window.formatDate = formatDate;
+    window.showToast = showToast;
+    window.db = db;
+  </script>
 </body>
 </html>
