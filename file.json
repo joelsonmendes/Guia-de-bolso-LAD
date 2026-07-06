@@ -1,0 +1,125 @@
+{
+  "name": "LAD Pocket Pro Siemens V3",
+  "short_name": "LAD Pocket Pro",
+  "description": "Ferramenta PWA para engenharia de automação Siemens — Padrões LAD, Simulador, Referência TIA Portal, IHM e Inversores",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#071a33",
+  "theme_color": "#071a33",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "categories": ["productivity", "utilities", "education"],
+  "id": "lad-pocket-pro-siemens-v3",
+  "icons": [
+    {
+      "src": "/icons/icon-72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/home.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Tela inicial do LAD Pocket Pro"
+    },
+    {
+      "src": "/screenshots/home-mobile.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Versão mobile"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Simulador LAD",
+      "short_name": "Simulador",
+      "description": "Abrir simulador de lógica ladder",
+      "url": "/#/simulator",
+      "icons": [{ "src": "/icons/shortcut-simulator.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Banco de Tags",
+      "short_name": "Tags",
+      "description": "Gerenciar banco de tags",
+      "url": "/#/tags",
+      "icons": [{ "src": "/icons/shortcut-tags.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Padrões LAD",
+      "short_name": "Padrões",
+      "description": "Consultar padrões de programação",
+      "url": "/#/patterns",
+      "icons": [{ "src": "/icons/shortcut-patterns.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Novo Projeto",
+      "short_name": "Projeto",
+      "description": "Criar novo projeto",
+      "url": "/#/newProject",
+      "icons": [{ "src": "/icons/shortcut-project.png", "sizes": "96x96" }]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
+}
